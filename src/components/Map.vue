@@ -17,7 +17,6 @@
   import leaflet from 'leaflet'
   import MapMarker from '@/components/Marker.vue'
   import locations from '@/mixins/locations.js'
-  import remote from '@/services/remote-api-proxy.js'
   import NProgress from 'nprogress'
   import { Bus } from '@/mixins/bus.js'
   import { mapGetters} from 'vuex'
@@ -74,9 +73,12 @@
           `${bounds.getNorthEast().lng},` +
           `${bounds.getNorthEast().lat}`;
 
-        remote.search(bbox).then((resp) => {
-          if (resp.status === 200) {
-            this.updateView(resp.results);
+        const api = this.$root.api + '/map' + '?bbox=' + bbox
+        fetch(api).then( async (resp) => {
+          if (resp.ok) {
+            let pending = resp.json() 
+            let data = await pending 
+            this.updateView(data.results);
           } else {
             console.log(resp)
           }
@@ -132,12 +134,12 @@
         // eslint-disable-next-line
         const zoom = L.control.zoom({position: 'bottomright'}).addTo(map)
 
-        var mbToken = ''
-        L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token=${mbToken}`, {
-          maxZoom: 18,
-          attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-          detectRetina: false
-        }).addTo(map);
+        // var mbToken = ''
+        // L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token=${mbToken}`, {
+        //   maxZoom: 18,
+        //   attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        //   detectRetina: false
+        // }).addTo(map);
 
         this.map = map;
 

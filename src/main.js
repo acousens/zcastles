@@ -10,6 +10,11 @@ Vue.use(VueCompositionApi);
 Vue.config.productionTip = false
 
 new Vue({
+  data() {
+    return {
+      api: window.location.origin + '/api',
+    }
+  },
   router,
   store,
   render: h => h(App)

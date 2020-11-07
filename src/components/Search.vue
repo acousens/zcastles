@@ -28,7 +28,6 @@
 </template>
 
 <script type="text/javascript">
-  import remote from '@/services/remote-api-proxy.js'
   import { Bus } from '@/mixins/bus.js'
   import {mapGetters} from 'vuex'
   
@@ -87,10 +86,14 @@
       },
       search() {
         let input = this.$refs.input
+        // let input = {value: 'santa'}
         if (input.value.length > 1) {
           this.searchBoxClass = 'loading'
-          remote.prediction(input.value).then((resp) => {
-            this.processResults(resp)
+          let url = this.$root.api + '/search?q=' + input.value
+          fetch(url).then( async (resp) => {
+            let pending = resp.json() 
+            let data = await pending
+            this.processResults(data)
             this.searchBoxClass = ''
           }).catch((err) => {
             console.log(err)
@@ -142,6 +145,7 @@
     },
     mounted () {
       this.$nextTick(() => {
+        // this.search()
         this.init();
       })
     }
