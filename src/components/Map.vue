@@ -26,6 +26,8 @@
     data() {
       return {
         map: null,
+        bbox: null,
+        searchURL: null,
         dragging: false,
         infoWindows: {},
         locations: {}
@@ -36,6 +38,9 @@
       ...mapGetters(['map/currentSearch', 'photosReady']),
       activeLocations: function() {
         return this.$store.getters['map/activeLocations']
+      },
+      api() {
+        return `${this.$root.api}/map?bbox=${this.bbox}`
       }  
     },
     mixins: [locations],
@@ -62,23 +67,40 @@
         }
         return locations
       },
-      searchMap() {
+      initSearch() {
         Bus.$emit('searchStart')
         NProgress.start()
         let bounds = this.map.getBounds()
         // fun fact. Leaflet coordinate point order is Lat, Lng. and mapquest uses Lng, Lat.
-        let bbox = 
-          `${bounds.getSouthWest().lng},` +
-          `${bounds.getSouthWest().lat},` +
-          `${bounds.getNorthEast().lng},` +
-          `${bounds.getNorthEast().lat}`;
+        this.bbox = [
+          bounds.getSouthWest().lng,
+          bounds.getSouthWest().lat,
+          bounds.getNorthEast().lng,
+          bounds.getNorthEast().lat
+        ].join(',')
+        
+        const id = Date.now()
+        console.log('new id is ' + id)
+        this.searchID = id
+        this.search(id)
+      },
+      search(searchID) {
+        if (searchID !== this.searchID) return false;
 
-        const api = this.$root.api + '/map' + '?bbox=' + bbox
-        fetch(api).then( async (resp) => {
+        if (this.searchURL === null) this.searchURL = this.api
+        fetch(this.searchURL).then( async (resp) => {
+          if (searchID !== this.searchID) return false;
+
           if (resp.ok) {
             let pending = resp.json() 
             let data = await pending 
             this.updateView(data.results);
+            if (searchID === this.searchID && data.pagination.nextUrl && data.pagination.currentPage < 4) { 
+              this.searchURL = data.pagination.nextUrl
+              this.search(searchID)
+            } else {
+              this.searchURL = null
+            }
           } else {
             console.log(resp)
           }
@@ -157,15 +179,15 @@
         this.subscribe();
         this.listeners();
         var debounce = require('lodash/debounce');
-        this.debounceSearchMap = debounce(this.searchMap, 500)
+        this.debounceSearchMap = debounce(this.initSearch, 500)
         
         if (this.photosReady) {
-          this.searchMap()
+          this.initSearch()
         } else {
           var interval = setInterval(() => {
             if (this.photosReady) {
               clearInterval(interval)
-              this.searchMap()
+              this.initSearch()
             }
           }, 10);        
         }
