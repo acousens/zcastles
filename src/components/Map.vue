@@ -126,7 +126,7 @@
           }
         })
       },
-      init() {
+      init: async function() {
         let map = L.map('map', {
           zoomControl: false,
           zoom: 14
@@ -134,12 +134,14 @@
         // eslint-disable-next-line
         const zoom = L.control.zoom({position: 'bottomright'}).addTo(map)
 
-        // var mbToken = ''
-        // L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token=${mbToken}`, {
-        //   maxZoom: 18,
-        //   attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-        //   detectRetina: false
-        // }).addTo(map);
+        const url = await fetch(this.$root.api + '/tiles')
+        const pending = url.text()
+        const tiles = await pending 
+        L.tileLayer(tiles, {
+          maxZoom: 18,
+          attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+          detectRetina: false
+        }).addTo(map);
 
         this.map = map;
 

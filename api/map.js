@@ -41,6 +41,5 @@ const search = function(req) {
 
 module.exports = async (req, res) => {
   const resp = await search(req)
-  console.log(resp)
   res.json( resp )
 }
