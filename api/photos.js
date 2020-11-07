@@ -1,16 +1,7 @@
 import axios from "axios"
 import { Promise } from "core-js";
 
-let url  = 'https://api.unsplash.com/collections/9881644/photos';
-    url += `?client_id=${process.env.UNSPLASH_CLIENT_ID}`
-    url += `&client_secret=${process.env.UNSPLASH_CLIENT_SECRET}`
-
-// module.exports = async (req, res) => {
-//   url += `&per_page=${req.query.per}`;
-//   url += `&page=${req.query.page}`
-//   const resp = await axios.get(url)
-//   res.json({photos: resp.data})
-// }
+let url = null;
 
 let page = 0, batch;
 function unsplashRequest(resolve, reject) {
@@ -45,7 +36,14 @@ const init = function() {
   })
 }
 
+function initURL() {
+  url = 'https://api.unsplash.com/collections/9881644/photos';
+  url += `?client_id=${process.env.UNSPLASH_CLIENT_ID}`
+  url += `&client_secret=${process.env.UNSPLASH_CLIENT_SECRET}`  
+}
+
 module.exports = async (req, res) => {
+  initURL()
   let photos = await init()
   res.json({photos: photos})
 }

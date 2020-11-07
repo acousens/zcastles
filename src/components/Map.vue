@@ -27,7 +27,7 @@
       return {
         map: null,
         bbox: null,
-        searchURL: null,
+        page: 0,
         dragging: false,
         infoWindows: {},
         locations: {}
@@ -40,8 +40,8 @@
         return this.$store.getters['map/activeLocations']
       },
       api() {
-        return `${this.$root.api}/map?bbox=${this.bbox}`
-      }  
+        return `${this.$root.api}/map?bbox=${this.bbox}&page=${this.page}`
+      }
     },
     mixins: [locations],
     methods: {
@@ -80,32 +80,39 @@
         ].join(',')
         
         const id = Date.now()
-        console.log('new id is ' + id)
         this.searchID = id
+        this.page = 0
         this.search(id)
       },
-      search(searchID) {
+      cancelIfOld(searchID) {
         if (searchID !== this.searchID) return false;
-
-        if (this.searchURL === null) this.searchURL = this.api
-        fetch(this.searchURL).then( async (resp) => {
-          if (searchID !== this.searchID) return false;
-
+        return true
+      },
+      incrementPage() {
+        if (this.page > 3) this.page = 0
+        this.page++
+      },
+      search(searchID) {
+        this.cancelIfOld(searchID)
+        this.incrementPage()
+        fetch(this.api).then( async (resp) => {
+          this.cancelIfOld(searchID)
           if (resp.ok) {
             let pending = resp.json() 
             let data = await pending 
+            if (data.error) {
+              console.error(data)
+              return false
+            }
             this.updateView(data.results);
-            if (searchID === this.searchID && data.pagination.nextUrl && data.pagination.currentPage < 4) { 
-              this.searchURL = data.pagination.nextUrl
+            if (data.next && data.next < 5) { 
               this.search(searchID)
-            } else {
-              this.searchURL = null
             }
           } else {
-            console.log(resp)
+            console.error(resp)
           }
         }).catch((err) => {
-          console.log(err)
+          console.error(err)
         })
       },
       saveMap() {
